@@ -1,4 +1,3 @@
-# flask-Dashboard
-This is the complete code that was used for my blog : https://blog.heptanalytics.com/2018/08/07/flask-plotly-dashboard/
+This code is based on the following project : https://blog.heptanalytics.com/2018/08/07/flask-plotly-dashboard/
 
 

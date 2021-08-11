@@ -1,0 +1,320 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="PSPad editor, www.pspad.com">
+  <title>BioXAS-Main Flux Calculator</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+  <link href='https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css' rel='stylesheet' type='text/css'>
+  <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+  <style>
+.topnav {
+  font-family: Arial, Helvetica, sans-serif;
+  overflow: hidden;
+  background-color: #333;
+}
+
+.topnav a {
+  float: left;
+  color: #f2f2f2;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  font-size: 17px;
+}
+
+.topnav a:hover {
+  background-color: #ddd;
+  color: black;
+}
+
+.topnav a.active {
+  background-color: #4C50AF;
+  color: white;
+}
+#bioxascalculator {
+  font-family: Arial, Helvetica, sans-serif;
+  border-collapse: collapse;
+  width: 80%;
+}
+
+#bioxascalculator td, #bioxascalculator th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+#bioxascalculator tr:nth-child(even){background-color: #f2f2f2;}
+
+#bioxascalculator tr:hover {background-color: #ddd;}
+
+#bioxascalculator th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #4C50AF;
+  color: white;
+}
+
+table.fixed { table-layout:fixed; }
+table.fixed td { overflow: hidden; }
+
+  .hkl {
+  width: 100%;
+  }
+
+  .scinp {
+  width: 100%;
+  }
+  .checkbutton input[type="checkbox"] {
+    opacity: 0;
+    position: fixed;
+    width: 0;
+  }
+  
+  .checkbutton label {
+      display: inline-block;
+      background-color:  #4C50AF;
+      padding: 5px 5px;
+      border: 2px solid #000000;
+      border-radius: 4px;
+      width: 80%;
+      color: white;
+  }
+  
+//  .scanbutton label:hover {
+//    background-color: #8CFFEF;
+//  }
+ 
+  .checkbutton input[type="checkbox"]:focus + label {
+      border: 2px #000000;
+  }
+  
+  .checkbutton input[type="checkbox"]:checked + label {
+      background-color: #8C90EF;
+      border-color: #000000;
+  }
+  .scanbutton input[type="radio"] {
+    opacity: 0;
+    position: fixed;
+    width: 0;
+  }
+  
+  .scanbutton label {
+      display: inline-block;
+      background-color:  #4C50AF;
+      padding: 5px 5px;
+      border: 2px solid #000000;
+      border-radius: 4px;
+      width: 80%;
+      color: white;
+  }
+  
+//  .scanbutton label:hover {
+//    background-color: #8CFFEF;
+//  }
+ 
+  .scanbutton input[type="radio"]:focus + label {
+      border: 2px #888888;
+  }
+  
+  .scanbutton input[type="radio"]:checked + label {
+      background-color: #8C90EF;
+      border-color: #222222;
+  }
+
+  .slidecontainer {
+    width: 100%;
+  }
+
+</style>
+<script>  
+  $( function() {
+    $( "#slider_M1" ).slider({
+     range: "min",
+     min: 0.11,
+     max: 0.23,
+     step: 0.12*0.01,
+     value: 0.15,    
+    
+      slide: function( event, ui ) { 
+        document.getElementById("slider_max_M1").innerHTML = ui.value;
+     
+      $.ajax({
+          url: "/upd_bioxas",
+          type: "GET",
+          contentType: 'application/json;charset=UTF-8',
+          data: getConfig(),
+          layout: {yaxis: {exponentformat: 'e', showexponent: 'all'}},
+          dataType:"json",
+          success: function (data) {
+              Plotly.newPlot("lineplot", data, layout);
+          }
+      });
+      }
+    });
+  } );
+
+  $( function() {
+    $( "#slider_dbhr" ).slider({
+     range: "min",
+     min: 0.1,
+     max: 0.3,
+     step: 0.2*0.01,
+     value: 0.2,    
+    
+      slide: function( event, ui ) { 
+        document.getElementById("slider_max_dbhr").innerHTML = ui.value;
+     
+      $.ajax({
+          url: "/upd_bioxas",
+          type: "GET",
+          contentType: 'application/json;charset=UTF-8',
+          data: getConfig(),
+          layout: {yaxis: {exponentformat: 'e', showexponent: 'all'}},
+          dataType:"json",
+          success: function (data) {
+              Plotly.newPlot("lineplot", data, layout);
+          }
+      });
+      }
+    });
+  } );
+
+function getConfig(){
+ var params = {}
+ var xia = 0;
+ params["cff1"] =  $("input[type='radio'][name='cff1']:checked").val();
+ params["cff2"] =  $("input[type='radio'][name='cff2']:checked").val();
+ params["dbhrgas"] =  $("input[type='radio'][name='dbhrgas']:checked").val();
+ params["dbhrio"] =  $("input[type='radio'][name='dbhrio']:checked").val();
+ params["i0"] =  $("input[type='radio'][name='i0']:checked").val();
+ params["m1p"] = $("#slider_M1").slider("option", "value"); 
+ params["dbhrp"] = $("#slider_dbhr").slider("option", "value");
+ if ($( "#xia_250" ).is(":checked")) {xia += Number(document.getElementById("xia_250").value);}
+ if ($( "#xia_500" ).is(":checked")) {xia += Number(document.getElementById("xia_500").value);}
+ if ($( "#xia_1000" ).is(":checked")) {xia += Number(document.getElementById("xia_1000").value);}
+ params["xia"] = xia;
+ return params;
+};
+
+function sendVal(obj)  {
+
+    var uiname = obj.id;
+    var uivalue = obj.value;
+ 
+    $.ajax({
+        url: "/upd_bioxas",
+        type: "GET",
+        contentType: 'application/json;charset=UTF-8',
+        data: getConfig(1),
+        layout: {yaxis: {exponentformat: 'e', showexponent: 'all'}},
+        dataType:"json",
+        success: function (data) {
+            Plotly.newPlot("lineplot", data, layout);
+        }
+    });
+}
+
+</script>
+
+
+  </head>
+  <body>
+  <div class="topnav">
+  <a class="active" href="/">Home</a>
+  <a href="#about">About</a>
+  </div>
+<table class="fixed" id="bioxascalculator">
+  <tr>
+    <col width="9%" />
+    <col width="7%" />
+    <col width="7%" />
+    <col width="7%" />
+    <col width="10%" />
+    <col width="50%" />
+    <col width="10%" />
+    <th colspan="4">
+    BioXAS-Main Flux Calculator
+    </th>
+    <td rowspan="5" colspan="3">
+    <div class="slidecontainer">
+    <div class="chart" id="lineplot">
+        <script>
+            var graphs = {{plot | safe}};
+            var layout = {yaxis: {exponentformat: 'e', showexponent: 'all'}};
+            Plotly.plot('lineplot',graphs,layout);
+        </script>
+    </div>
+    </div>
+    </td>    
+  </tr>
+  <tr>
+    <td>CFF1</td>
+      <td><div class="scanbutton"><input type="radio" name="cff1" checked value="0" id="cff1_0" onclick=sendVal(this)>
+      <label for="cff1_0">0</label></div></td>
+      <td><div class="scanbutton"><input type="radio" name="cff1" value="1" id="cff1_50" onclick=sendVal(this)>
+      <label for="cff1_50">50</label></div></td>
+      <td></td>
+  </tr>
+  <tr>
+    <td>CFF2</td>
+      <td><div class="scanbutton"><input type="radio" name="cff2" checked value="0" id="cff2_0" onclick=sendVal(this)>
+      <label for="cff2_0">0</label></div></td>
+      <td><div class="scanbutton"><input type="radio" name="cff2" value="1" id="cff2_700" onclick=sendVal(this)>
+      <label for="cff2_700">700</label></div></td>
+      <td></td>
+  </tr>
+  <tr>
+    <td>DBHR Gas</td>
+      <td><div class="scanbutton"><input type="radio" name="dbhrgas" value="0" id="dbhrgas_none" onclick=sendVal(this)>
+      <label for="dbhrgas_none">None</label></div></td>
+      <td><div class="scanbutton"><input type="radio" name="dbhrgas" value="1" id="dbhrgas_he" onclick=sendVal(this)>
+      <label for="dbhrgas_he">He</label></div></td>
+      <td><div class="scanbutton"><input type="radio" name="dbhrgas" checked value="2" id="dbhrgas_air" onclick=sendVal(this)>
+      <label for="dbhrgas_air">Air</label></div></td>
+  </tr>
+  <tr>
+    <td>DBHR In/Out</td>
+      <td><div class="scanbutton"><input type="radio" name="dbhrio" value="0" id="dbhrio_0" onclick=sendVal(this)>
+      <label for="dbhrio_0">In</label></div></td>
+      <td><div class="scanbutton"><input type="radio" name="dbhrio" checked value="1" id="dbhrio_1" onclick=sendVal(this)>
+      <label for="dbhrio_1">Out</label></div></td>
+      <td></td>
+  </tr>
+  <tr>
+    <td>XIA Filters</td>
+      <td><div class="checkbutton"><input type="checkbox" value="1" id="xia_250" onclick=sendVal(this)>
+      <label for="xia_250">250</label></div></td>
+      <td><div class="checkbutton"><input type="checkbox" value="2" id="xia_500" onclick=sendVal(this)>
+      <label for="xia_500">500</label></div></td>
+      <td><div class="checkbutton"><input type="checkbox" value="4" id="xia_1000" onclick=sendVal(this)>
+      <label for="xia_1000">1000</label></div></td>
+    <td><span id="slider_min_M1">M1 pitch</span></td>
+    <td>
+    <div class="slidecontainer">
+        <div id="slider_M1"></div>
+    </div> 
+    </td>
+    <td><span id="slider_max_M1">0.15</span></td>
+  </tr>
+  <tr>
+    <td>IC reading</td>
+      <td><div class="scanbutton"><input type="radio" name="i0" checked value="0" id="i0_flux" onclick=sendVal(this)>
+      <label for="i0_flux">Flux</label></div></td>
+      <td><div class="scanbutton"><input type="radio" name="i0" value="1" id="i0_n2" onclick=sendVal(this)>
+      <label for="i0_n2">N2</label></div></td>
+      <td><div class="scanbutton"><input type="radio" name="i0" value="2" id="i0_air" onclick=sendVal(this)>
+      <label for="i0_air">Air</label></div></td>
+    <td><span id="slider_min_dbhr">DBHR pitch</span></td>
+    <td>
+    <div class="slidecontainer">
+        <div id="slider_dbhr"></div>
+    </div> 
+    </td>
+    <td><span id="slider_max_dbhr">0.2</span></td>
+  </tr>
+</table>
+</body>
+</html>

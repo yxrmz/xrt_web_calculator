@@ -1,0 +1,364 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="PSPad editor, www.pspad.com">
+  <title>xrt - Crystal Reflectivity Calculator</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+  <link href='https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css' rel='stylesheet' type='text/css'>
+  <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+  <style>
+.topnav {
+  font-family: Arial, Helvetica, sans-serif;
+  overflow: hidden;
+  background-color: #333;
+}
+
+.topnav a {
+  float: left;
+  color: #f2f2f2;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  font-size: 17px;
+}
+
+.topnav a:hover {
+  background-color: #ddd;
+  color: black;
+}
+
+.topnav a.active {
+  background-color: #4C50AF;
+  color: white;
+}
+#crystalparams {
+  font-family: Arial, Helvetica, sans-serif;
+  border-collapse: collapse;
+  width: 80%;
+}
+
+#crystalparams td, #crystalparams th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+#crystalparams tr:nth-child(even){background-color: #f2f2f2;}
+
+#crystalparams tr:hover {background-color: #ddd;}
+
+#crystalparams th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #4C50AF;
+  color: white;
+}
+
+table.fixed { table-layout:fixed; }
+table.fixed td { overflow: hidden; }
+
+  .hkl {
+  width: 100%;
+  }
+
+  .scinp {
+  width: 100%;
+  }
+
+  .scanbutton input[type="radio"] {
+    opacity: 0;
+    position: fixed;
+    width: 0;
+  }
+  
+  .scanbutton label {
+      display: inline-block;
+      background-color:  #4C50AF;
+      padding: 5px 5px;
+      border: 2px solid #000000;
+      border-radius: 4px;
+      width: 80%;
+      color: white;
+  }
+  
+//  .scanbutton label:hover {
+//    background-color: #8CFFEF;
+//  }
+ 
+  .scanbutton input[type="radio"]:focus + label {
+      border: 2px #888888;
+  }
+  
+  .scanbutton input[type="radio"]:checked + label {
+      background-color: #8C90EF;
+      border-color: #222222;
+  }
+
+  .slidecontainer {
+    width: 100%;
+  }
+</style>
+<script>  
+    var config = {
+      modeBarButtonsToAdd: [
+        {
+          name: 'Export CSV',
+          icon: Plotly.Icons.disk,
+          direction: 'up',
+          click: function(gd) {
+            var text = '';
+
+            for(var i = 0; i < gd.data.length; i++){
+              text += gd.data[i].name + '.theta,' + gd.data[i].name + '.R,';
+            };
+            text = text.substring(0, text.length - 1) + '\n';
+            for(var i = 0; i < gd.data[0].x.length; i++){
+              for(var j = 0; j < gd.data.length; j++){
+              text += gd.data[j].x[i] + ',' + gd.data[j].y[i] + ',';} ;
+              text = text.substring(0, text.length - 1) + '\n';
+            };
+            var blob = new Blob([text], {type: "text/plain"});
+            var a = document.createElement("a");
+            const object_URL = URL.createObjectURL(blob);
+            a.href = object_URL;
+            var pconf = getConfig(0);
+            a.download = pconf['material']+'('+pconf['hkl_h']+','+pconf['hkl_k']+','+pconf['hkl_l']+')'+'_reflectivity.csv';
+            document.body.appendChild(a);
+            a.click();
+            URL.revokeObjectURL(object_URL);
+          }}]};
+
+  $( function() {
+    $( "#myRange" ).slider({
+     range: "min",
+     min: 4500,
+     max: 18000,
+     step: 135,
+     value: 9000,    
+    
+      slide: function( event, ui ) { 
+        var pos = ui.value;
+        document.getElementById("scanValue").innerHTML = ui.value;
+        var scanAxis = document.getElementById("scanAxis").innerHTML;
+     
+      $.ajax({
+          url: "/upd_calc",
+          type: "GET",
+          contentType: 'application/json;charset=UTF-8',
+          data: getConfig(0),
+          dataType:"json",
+          success: function (data) {
+              Plotly.newPlot("lineplot", data, {}, config);
+          }
+      });
+      }
+    });
+  } );
+
+function getConfig(mode){
+ var params = {}
+ params["energy"] = document.getElementById("energy").value;
+ params["thickness"] = document.getElementById("thickness").value;  
+ params["asymmetry"] = document.getElementById("asymmetry").value;
+ if (mode == 0) {
+ params[document.getElementById("scanAxis").innerHTML] = document.getElementById("scanValue").innerHTML;}
+ params["hkl_h"] = document.getElementById("hkl_h").value;
+ params["hkl_k"] = document.getElementById("hkl_k").value;  
+ params["hkl_l"] = document.getElementById("hkl_l").value;
+ params["axis_min"] = document.getElementById("axis_min").innerHTML;
+ params["axis_max"] = document.getElementById("axis_max").innerHTML;
+ var geom = "";
+ var material = "";
+
+ if ($( "#pBragg" ).is(":checked")) { geom = "Bragg";}
+ else { geom = "Laue";}
+
+ if ($( "#pSi" ).is(":checked")) { material = "Si";}
+ else { material = "Ge";}
+ params["geometry"] = geom;
+ params["material"] = material;
+ return params;
+};
+
+function sendVal(obj)  {
+
+    var uiname = obj.id;
+    var uivalue = obj.value;
+    if (["pBragg", "pLaue"].includes(uiname)) { uiname="geometry"; };
+
+    $.ajax({
+        url: "/upd_calc",
+        type: "GET",
+        contentType: 'application/json;charset=UTF-8',
+        data: getConfig(1),
+        dataType:"json",
+        success: function (data) {
+            Plotly.newPlot("lineplot", data, {}, config);
+        }
+    });
+}
+
+function send_and_update(obj) {
+  sendVal(obj);
+  var uiname = obj.id;
+  var scanbutton = document.getElementById(uiname+"scan");
+  if ($(scanbutton).is(":checked")) { prepareScan(scanbutton); }
+
+}
+
+function prepareScan(obj) {
+  var scanEl = document.getElementById(obj.value);
+  var scanval = scanEl.value;
+  var scanmin = 0;
+  var scanmax = 0;
+  var scanstep = 0;
+
+  if (scanval == 0) {scanmin = -1; scanmax = 1; scanstep = 2*0.01;}
+  else if (scanval > 0) {scanmin = scanval*0.5; scanmax = scanval*2; scanstep = scanval*1.5*0.01;}
+  else {scanmin = scanval*2; scanmax = scanval*0.5; scanstep = -scanval*1.5*0.01;}
+
+  document.getElementById("slider_min").innerHTML = scanmin;
+  document.getElementById("slider_max").innerHTML = scanmax;
+  document.getElementById("scanAxis").innerHTML = obj.value;
+  document.getElementById("scanValue").innerHTML = scanval;
+
+  $( "#myRange" ).slider( "option", "max", scanmax );
+  $( "#myRange" ).slider( "option", "min", scanmin );
+  $( "#myRange" ).slider( "option", "value", scanval );
+  $( "#myRange" ).slider( "option", "step", scanstep );
+}
+$( function() {
+    $( "#slider-range" ).slider({
+      range: true,
+      min: -300,
+      max: 300,
+      step: 2,
+      values: [ -100, 100 ],
+
+     
+      slide: function( event, ui ) {
+        document.getElementById("axis_min").innerHTML = ui.values[0];
+        document.getElementById("axis_max").innerHTML = ui.values[1];
+
+   
+      $.ajax({
+          url: "/upd_calc",
+          type: "GET",
+          contentType: 'application/json;charset=UTF-8',
+          data: getConfig(0),
+          dataType:"json",
+          success: function (data) {
+              Plotly.newPlot("lineplot", data, {}, config);
+          }
+      });
+      }
+    });
+  } );
+</script>
+
+
+  </head>
+  <body>
+  <div class="topnav">
+  <a class="active" href="/">Home</a>
+  <a href="#about">About</a>
+  </div>
+  <table class="fixed" id="crystalparams">
+  <tr>
+    <col width="9%" />
+    <col width="7%" />
+    <col width="7%" />
+    <col width="7%" />
+    <col width="10%" />
+    <col width="50%" />
+    <col width="10%" />
+    <th colspan="4">
+    Crystal parameters
+    </th>
+    <td rowspan="6" colspan="3">
+    <div class="slidecontainer">
+    <div class="chart" id="lineplot">
+        <script>
+            var graphs = {{plot | safe}};
+            Plotly.plot('lineplot',graphs, {}, config);
+        </script>
+    </div>
+    </div>
+    </td>    
+  </tr>
+  <tr>
+    <td>Geometry</td>
+      <td><div class="scanbutton"><input type="radio" name="geometry" checked value="Bragg" id="pBragg" onclick=sendVal(this)>
+      <label for="pBragg">Bragg</label></div></td>
+      <td><div class="scanbutton"><input type="radio" name="geometry" value="Laue" id="pLaue" onclick=sendVal(this)>
+      <label for="pLaue">Laue</label></div></td>
+      <td></td>
+  </tr>
+  <tr>
+    <td>Material</td>
+<!--
+//    <td colspan="3">
+//      <select>
+//        <option>Si</option>
+//        <option>Ge</option>
+//      </select>
+//    </td>
+-->
+      <td><div class="scanbutton"><input type="radio" name="material" checked value="Si" id="pSi" onclick=sendVal(this)>
+      <label for="pSi">Si</label></div></td>
+      <td><div class="scanbutton"><input type="radio" name="material" value="Ge" id="pGe" onclick=sendVal(this)>
+      <label for="pGe">Ge</label></div></td>
+      <td></td>
+  </tr>
+  <tr>
+    <td rowspan="2">Cut</td>
+      <td>h</td>      
+      <td>k</td>
+      <td>l</td>
+  </tr>
+  <tr>
+      <td><input type="text" value="1" id="hkl_h" class="hkl" onchange=sendVal(this)></td>      
+      <td><input type="text" value="1" id="hkl_k" class="hkl" onchange=sendVal(this)></td>
+      <td><input type="text" value="1" id="hkl_l" class="hkl" onchange=sendVal(this)></td>
+  </tr>
+  <tr>
+    <td>Thickness [mm]</td>
+    <td colspan="2"><input type="text" value="1." id="thickness" class="scinp" onchange=send_and_update(this)></td>
+    <td><div class="scanbutton"><input type="radio" name="scanselect" value="thickness" id="thicknessscan" onclick=prepareScan(this)>
+    <label for="thicknessscan">Scan</label></div></td>
+  </tr>
+  <tr>
+    <td>Energy [eV]</td>
+    <td colspan="2"><input type="text" value="9000" id="energy" class="scinp" onchange=send_and_update(this)></td>
+    <td><div class="scanbutton"><input type="radio" name="scanselect" value="energy" checked id="energyscan" onclick=prepareScan(this)>
+    <label for="energyscan">Scan</label></div></td>
+    <td><span id="axis_min">-100</span></td>
+    <td>
+    <div class="slidecontainer">
+        <div id="slider-range"></div>
+    </div> 
+    </td>
+    <td><span id="axis_max">100</span></td>
+  </tr>
+  <tr>
+    <td>Asymmetry angle [&#176;]</td>
+    <td colspan="2"><input type="text" value="0" id="asymmetry" class="scinp" onchange=send_and_update(this)></td>
+    <td><div class="scanbutton"><input type="radio" name="scanselect" value="asymmetry" id="asymmetryscan" onclick=prepareScan(this)>
+    <label for="asymmetryscan">Scan</label></div></td>
+    <td><span id="slider_min">4500</span></td>
+    <td>
+    <div class="slidecontainer">
+        <div id="myRange"></div>
+        <p><span id="scanAxis">energy</span>: <span id="scanValue">9000</span><span id="scanUnits"></span></p>
+    </div> 
+    </td>
+    <td><span id="slider_max">18000</span></td>
+  </tr>
+</table>
+<div id="slider-range"></div>
+
+  </body>
+</html>

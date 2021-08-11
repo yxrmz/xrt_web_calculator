@@ -1,0 +1,25 @@
+* {box-sizing: border-box;}
+.row {overflow: hidden; clear: both;}
+.cell {border: 1px solid #999; padding: 0px; float: left;}
+.cell.full {float: none;}
+.col-1 {width: 20%;}
+.col-2 {width: 40%;}
+.col-3 {width: 60%;}
+.col-33 {width: 33.3%;}
+.row-2 {height: 3em;}
+
+
+<div class="row">
+  <div class="cell col-1 row-2">Subject</div>
+  <div class="cell col-3 row-2">
+    <div class="row">
+      <div class="cell full">First Term</div>
+    </div>
+    <div class="row">
+      <div class="cell col-33">October Test</div>
+      <div class="cell col-33">December Exam</div>
+      <div class="cell col-33">Term Average</div>
+    </div>
+  </div>
+  <div class="col-1 row-2 cell">Teacher's Evaluation</div>
+</div>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>My First Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+  <!-- CSS -->
+  <link href='https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css' rel='stylesheet' type='text/css'>
+  
+  <!-- Script -->
+  <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+  <style>
+  .slidecontainer {
+    width: 30%;
+  }
+  </style>
+
+  <script>  
+  $( function() {
+    $( "#myRange" ).slider({
+     range: "min",
+     min: 1,
+     max: 100,
+     step: 1,
+     value: 25,    
+    
+      slide: function( event, ui ) { 
+        var pos = ui.value;
+        var output = document.getElementById("demo");
+        output.innerHTML = ui.value;
+     
+      $.ajax({
+          url: "/recalc",
+          type: "GET",
+          contentType: 'application/json;charset=UTF-8',
+          data: {
+              'sfreq': pos
+          },
+          dataType:"json",
+          success: function (data) {
+              Plotly.newPlot("lineplot", data );
+          }
+      });
+      }
+    
+    
+    });
+  } );
+  </script>
+</head>
+<body>
+<div class="slidecontainer">
+<p>Reflectivity of Laue crystals</p>
+    <div class="row">
+          <div class="col-md-6">
+              <div class="chart" id="lineplot">
+                  <script>
+                      var graphs = {{plot | safe}};
+                      Plotly.plot('lineplot',graphs,{});
+                  </script>
+              </div>
+        <div class="col-xs-3">
+          <div class="slidecontainer">
+              <div id="myRange"> </div>
+              <p>Crystal thickness: <span id="demo"></span> um</p>
+          </div>
+          </div>
+
+</body>
+</html>
